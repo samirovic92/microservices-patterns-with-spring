@@ -1,3 +1,5 @@
+server:
+  port: 0
 spring:
   application:
     name: products-service
@@ -7,3 +9,6 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${instanceId:${random.value}}
+
