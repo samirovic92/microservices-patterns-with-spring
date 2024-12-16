@@ -1,28 +1,21 @@
 package com.samic.ProductsService.command.rest;
 
+import lombok.AllArgsConstructor;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/products")
+@AllArgsConstructor
 public class ProductCommandController {
 
     private final CommandGateway commandGateway;
-
-    public ProductCommandController(CommandGateway commandGateway) {
-        this.commandGateway = commandGateway;
-    }
 
     @PostMapping
     public String createProduct(@RequestBody CreateProductRequest createProductRequest) {
         var createProductCommand = createProductRequest.toCommand();
         String returnValue = this.commandGateway.sendAndWait(createProductCommand);
         return returnValue;
-    }
-
-    @GetMapping
-    public String findProduct() {
-        return "Handle Get request";
     }
 
     @PutMapping
