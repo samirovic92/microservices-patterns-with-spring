@@ -1,4 +1,4 @@
-package com.samic.ProductsService.events;
+package com.samic.ProductsService.core.events;
 
 import lombok.Data;
 

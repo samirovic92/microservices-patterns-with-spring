@@ -1,18 +1,15 @@
-package com.samic.ProductsService.rest;
+package com.samic.ProductsService.command.rest;
 
-import com.samic.ProductsService.command.CreateProductCommand;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/products")
-public class ProductController {
+public class ProductCommandController {
 
     private final CommandGateway commandGateway;
 
-    public ProductController(CommandGateway commandGateway) {
+    public ProductCommandController(CommandGateway commandGateway) {
         this.commandGateway = commandGateway;
     }
 

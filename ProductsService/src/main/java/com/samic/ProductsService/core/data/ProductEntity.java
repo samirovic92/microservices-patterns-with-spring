@@ -1,4 +1,4 @@
-package com.samic.ProductsService.data;
+package com.samic.ProductsService.core.data;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

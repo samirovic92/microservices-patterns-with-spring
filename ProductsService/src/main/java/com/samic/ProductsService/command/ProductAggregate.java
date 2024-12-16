@@ -1,6 +1,6 @@
 package com.samic.ProductsService.command;
 
-import com.samic.ProductsService.events.ProductCreatedEvent;
+import com.samic.ProductsService.core.events.ProductCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;

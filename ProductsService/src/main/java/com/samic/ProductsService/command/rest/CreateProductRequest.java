@@ -1,4 +1,4 @@
-package com.samic.ProductsService.rest;
+package com.samic.ProductsService.command.rest;
 
 import com.samic.ProductsService.command.CreateProductCommand;
 import lombok.Data;

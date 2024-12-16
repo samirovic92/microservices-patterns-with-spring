@@ -1,4 +1,4 @@
-package com.samic.ProductsService.data;
+package com.samic.ProductsService.core.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
