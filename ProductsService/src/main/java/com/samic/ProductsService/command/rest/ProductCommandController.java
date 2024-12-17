@@ -1,5 +1,6 @@
 package com.samic.ProductsService.command.rest;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,7 @@ public class ProductCommandController {
     private final CommandGateway commandGateway;
 
     @PostMapping
-    public String createProduct(@RequestBody CreateProductRequest createProductRequest) {
+    public String createProduct(@Valid @RequestBody CreateProductRequest createProductRequest) {
         var createProductCommand = createProductRequest.toCommand();
         String returnValue = this.commandGateway.sendAndWait(createProductCommand);
         return returnValue;
