@@ -22,6 +22,12 @@ spring:
       settings:
         web-allow-others: true
 
+axon:
+  eventhandling:
+    processors:
+      products-group:
+        mode: subscribing
+
 eureka:
   client:
     service-url:
