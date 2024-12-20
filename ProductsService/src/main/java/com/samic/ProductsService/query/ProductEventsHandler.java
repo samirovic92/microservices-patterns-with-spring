@@ -25,7 +25,7 @@ public class ProductEventsHandler {
     }
 
     @EventHandler
-    public void on(ProductCreatedEvent event) throws Exception {
+    public void on(ProductCreatedEvent event) {
         ProductEntity entity = new ProductEntity();
         BeanUtils.copyProperties(event, entity);
         productRepository.save(entity);
