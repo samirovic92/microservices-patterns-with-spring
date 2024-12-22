@@ -1,6 +1,6 @@
 package com.samic.OrdersService.command.rest;
 
-import com.samic.OrdersService.command.CreateOrderCommand;
+import com.samic.OrdersService.command.commands.CreateOrderCommand;
 import lombok.Data;
 
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.samic.ProductsService.command.rest;
 
-import com.samic.ProductsService.command.CreateProductCommand;
+import com.samic.ProductsService.command.commands.CreateProductCommand;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

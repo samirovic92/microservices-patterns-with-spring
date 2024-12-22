@@ -1,6 +1,6 @@
 package com.samic.ProductsService.command.interceptor;
 
-import com.samic.ProductsService.command.CreateProductCommand;
+import com.samic.ProductsService.command.commands.CreateProductCommand;
 import com.samic.ProductsService.core.data.ProductLookupRepository;
 import lombok.AllArgsConstructor;
 import org.axonframework.commandhandling.CommandMessage;

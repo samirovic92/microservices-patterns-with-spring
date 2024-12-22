@@ -1,6 +1,9 @@
 package com.samic.ProductsService.command;
 
+import com.samic.ProductsService.command.commands.CreateProductCommand;
 import com.samic.ProductsService.core.events.ProductCreatedEvent;
+import com.samic.commonService.command.ReserveProductCommand;
+import com.samic.commonService.events.ProductReservedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -34,8 +37,18 @@ public class ProductAggregate {
 
         ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent();
         BeanUtils.copyProperties(createProductCommand, productCreatedEvent);
-
         AggregateLifecycle.apply(productCreatedEvent);
+    }
+
+    @CommandHandler
+    public void handle(ReserveProductCommand reserveProductCommand) {
+        if(quantity < reserveProductCommand.getQuantity()) {
+            throw new IllegalArgumentException("Insufficient number of items in stock!");
+        }
+
+        ProductReservedEvent productReservedEvent = new ProductReservedEvent();
+        BeanUtils.copyProperties(reserveProductCommand, productReservedEvent);
+        AggregateLifecycle.apply(productReservedEvent);
     }
 
     @EventSourcingHandler
@@ -44,5 +57,10 @@ public class ProductAggregate {
         this.title = productCreatedEvent.getTitle();
         this.price = productCreatedEvent.getPrice();
         this.quantity = productCreatedEvent.getQuantity();
+    }
+
+    @EventSourcingHandler
+    public void on(ProductReservedEvent productReservedEvent) {
+        this.quantity -= productReservedEvent.getQuantity();
     }
 }

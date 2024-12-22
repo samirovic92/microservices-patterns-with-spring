@@ -1,5 +1,6 @@
 package com.samic.OrdersService.command;
 
+import com.samic.OrdersService.command.commands.CreateOrderCommand;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
