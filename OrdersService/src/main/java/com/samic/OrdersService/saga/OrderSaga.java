@@ -6,6 +6,7 @@ import com.samic.commonService.command.ReserveProductCommand;
 import com.samic.commonService.events.ProductReservedEvent;
 import com.samic.commonService.model.User;
 import com.samic.commonService.query.FetchUserPaymentDetailsQuery;
+import org.axonframework.commandhandling.CommandCallback;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.modelling.saga.SagaEventHandler;
@@ -33,18 +34,12 @@ public class OrderSaga {
     @StartSaga
     @SagaEventHandler(associationProperty = "orderId")
     public void handle(OrderCreatedEvent orderCreatedEvent) {
+        logger.info(String.format("OrderCreatedEvent event is handled for the orderId: %s", orderCreatedEvent.getOrderId()));
+
         ReserveProductCommand reserveProductCommand = new ReserveProductCommand();
         BeanUtils.copyProperties(orderCreatedEvent, reserveProductCommand);
 
-        logger.info(
-                String.format("OrderCreatedEvent event is handled for the orderId: %s", orderCreatedEvent.getOrderId())
-        );
-
-        this.commandGateway.send(reserveProductCommand, (commandMessage, commandResultMessage) -> {
-            if(commandResultMessage.isExceptional()){
-                // start a compensating transaction
-            }
-        });
+        this.commandGateway.send(reserveProductCommand, reserveProductCommandCallback());
     }
 
     @SagaEventHandler(associationProperty = "orderId")
@@ -56,32 +51,45 @@ public class OrderSaga {
 
         var userId = productReservedEvent.getUserId();
         try {
+
             FetchUserPaymentDetailsQuery userPaymentDetailsQuery = new FetchUserPaymentDetailsQuery(userId);
             User user = this.queryGateway.query(userPaymentDetailsQuery, ResponseTypes.instanceOf(User.class)).join();
-
             if(Objects.isNull(user)) {
                 //start compensating Transaction
                 return;
             }
-
             logger.info("Successfully fetch user details for user : " + user);
+            ProcessPaymentCommand processPaymentCommand = buildProcessPaymentCommand(productReservedEvent, user);
+            commandGateway.send(processPaymentCommand, processPaymentCommandCallback());
 
-            ProcessPaymentCommand processPaymentCommand = ProcessPaymentCommand.builder()
-                    .paymentId(UUID.randomUUID().toString())
-                    .orderId(productReservedEvent.getOrderId())
-                    .paymentDetails(user.getPaymentDetails())
-                    .build();
-            commandGateway.send(processPaymentCommand, (commandMessage, commandResultMessage) -> {
-                if(commandResultMessage.isExceptional()){
-                    // start a compensating transaction
-                }
-            });
-            // Send Command
         } catch (Exception e) {
             logger.error(" Error when fetching user details for userId :" + userId, e.getMessage());
             // start compensating Transaction
             return;
         }
+    }
 
+    private CommandCallback<ReserveProductCommand, Object> reserveProductCommandCallback() {
+        return (commandMessage, commandResultMessage) -> {
+            if (commandResultMessage.isExceptional()) {
+                // start a compensating transaction
+            }
+        };
+    }
+
+    private CommandCallback<ProcessPaymentCommand, Object> processPaymentCommandCallback() {
+        return (commandMessage, commandResultMessage) -> {
+            if (commandResultMessage.isExceptional()) {
+                // start a compensating transaction
+            }
+        };
+    }
+
+    private ProcessPaymentCommand buildProcessPaymentCommand(ProductReservedEvent productReservedEvent, User user) {
+        return ProcessPaymentCommand.builder()
+                .paymentId(UUID.randomUUID().toString())
+                .orderId(productReservedEvent.getOrderId())
+                .paymentDetails(user.getPaymentDetails())
+                .build();
     }
 }
