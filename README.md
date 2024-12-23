@@ -1,5 +1,5 @@
 # Microservices patterns with spring
-in this Project, I will implement some of the microservices pattern , as :
+In this project, I will implement several microservices patterns, including:
 - Discovery server
 - Api Gateway
 - CQRS
