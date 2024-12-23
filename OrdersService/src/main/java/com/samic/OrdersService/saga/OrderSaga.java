@@ -1,6 +1,7 @@
 package com.samic.OrdersService.saga;
 
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
+import com.samic.commonService.command.ProcessPaymentCommand;
 import com.samic.commonService.command.ReserveProductCommand;
 import com.samic.commonService.events.ProductReservedEvent;
 import com.samic.commonService.model.User;
@@ -17,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Saga
 public class OrderSaga {
@@ -63,10 +65,20 @@ public class OrderSaga {
             }
 
             logger.info("Successfully fetch user details for user : " + user);
+
+            ProcessPaymentCommand processPaymentCommand = ProcessPaymentCommand.builder()
+                    .paymentId(UUID.randomUUID().toString())
+                    .orderId(productReservedEvent.getOrderId())
+                    .paymentDetails(user.getPaymentDetails())
+                    .build();
+            commandGateway.send(processPaymentCommand, (commandMessage, commandResultMessage) -> {
+                if(commandResultMessage.isExceptional()){
+                    // start a compensating transaction
+                }
+            });
             // Send Command
         } catch (Exception e) {
-            logger.error(" Error when fetching user details for userId :" + userId);
-            logger.error(e.getMessage());
+            logger.error(" Error when fetching user details for userId :" + userId, e.getMessage());
             // start compensating Transaction
             return;
         }
