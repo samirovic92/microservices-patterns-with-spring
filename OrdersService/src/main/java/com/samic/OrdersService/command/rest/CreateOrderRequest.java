@@ -1,5 +1,6 @@
 package com.samic.OrdersService.command.rest;
 
+import com.samic.OrdersService.command.OrderStatus;
 import com.samic.OrdersService.command.commands.CreateOrderCommand;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class CreateOrderRequest {
                 .productId(this.productId)
                 .quantity(this.quantity)
                 .addressId(this.addressId)
+                .orderStatus(OrderStatus.CREATED)
                 .build();
     }
 }

@@ -1,15 +1,20 @@
 package com.samic.OrdersService.saga;
 
+import com.samic.OrdersService.command.commands.ApproveOrderCommand;
+import com.samic.OrdersService.core.events.OrderApprovedEvent;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
 import com.samic.commonService.command.ProcessPaymentCommand;
 import com.samic.commonService.command.ReserveProductCommand;
+import com.samic.commonService.events.PaymentProcessedEvent;
 import com.samic.commonService.events.ProductReservedEvent;
 import com.samic.commonService.model.User;
 import com.samic.commonService.query.FetchUserPaymentDetailsQuery;
 import org.axonframework.commandhandling.CommandCallback;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
+import org.axonframework.modelling.saga.EndSaga;
 import org.axonframework.modelling.saga.SagaEventHandler;
+import org.axonframework.modelling.saga.SagaLifecycle;
 import org.axonframework.modelling.saga.StartSaga;
 import org.axonframework.queryhandling.QueryGateway;
 import org.axonframework.spring.stereotype.Saga;
@@ -35,10 +40,8 @@ public class OrderSaga {
     @SagaEventHandler(associationProperty = "orderId")
     public void handle(OrderCreatedEvent orderCreatedEvent) {
         logger.info(String.format("OrderCreatedEvent event is handled for the orderId: %s", orderCreatedEvent.getOrderId()));
-
         ReserveProductCommand reserveProductCommand = new ReserveProductCommand();
         BeanUtils.copyProperties(orderCreatedEvent, reserveProductCommand);
-
         this.commandGateway.send(reserveProductCommand, reserveProductCommandCallback());
     }
 
@@ -67,6 +70,19 @@ public class OrderSaga {
             // start compensating Transaction
             return;
         }
+    }
+
+    @SagaEventHandler(associationProperty = "orderId")
+    private void handle(PaymentProcessedEvent paymentProcessedEvent) {
+        ApproveOrderCommand approveOrderCommand = new ApproveOrderCommand(paymentProcessedEvent.getOrderId());
+       this.commandGateway.send(approveOrderCommand);
+    }
+
+    @EndSaga
+    @SagaEventHandler(associationProperty = "orderId")
+    private void handle(OrderApprovedEvent orderApprovedEvent) {
+        logger.info("Order is Approved. Order saga is ended for orderId : " + orderApprovedEvent.getOrderId());
+        // SagaLifecycle.end();
     }
 
     private CommandCallback<ReserveProductCommand, Object> reserveProductCommandCallback() {

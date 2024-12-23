@@ -1,6 +1,8 @@
 package com.samic.OrdersService.command;
 
+import com.samic.OrdersService.command.commands.ApproveOrderCommand;
 import com.samic.OrdersService.command.commands.CreateOrderCommand;
+import com.samic.OrdersService.core.events.OrderApprovedEvent;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -29,6 +31,12 @@ public class OrderAggregate {
         AggregateLifecycle.apply(orderCreatedEvent);
     }
 
+    @CommandHandler
+    public void handle(ApproveOrderCommand approveOrderCommand) {
+        OrderApprovedEvent orderCreatedEvent = new OrderApprovedEvent(approveOrderCommand.getOrderId());
+        AggregateLifecycle.apply(orderCreatedEvent);
+    }
+
     @EventSourcingHandler
     public void on(OrderCreatedEvent orderCreatedEvent) {
         this.orderId = orderCreatedEvent.orderId;
@@ -37,5 +45,10 @@ public class OrderAggregate {
         this.quantity = orderCreatedEvent.getQuantity();
         this.addressId = orderCreatedEvent.getAddressId();
         this.orderStatus = OrderStatus.CREATED;
+    }
+
+    @EventSourcingHandler
+    public void on(OrderApprovedEvent orderCreatedEvent) {
+        this.orderStatus = OrderStatus.APPROVED;
     }
 }
