@@ -3,20 +3,30 @@ package com.samic.OrdersService.saga;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
 import com.samic.commonService.command.ReserveProductCommand;
 import com.samic.commonService.events.ProductReservedEvent;
+import com.samic.commonService.model.User;
+import com.samic.commonService.query.FetchUserPaymentDetailsQuery;
 import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.modelling.saga.SagaEventHandler;
 import org.axonframework.modelling.saga.StartSaga;
+import org.axonframework.queryhandling.QueryGateway;
 import org.axonframework.spring.stereotype.Saga;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Objects;
+
 @Saga
 public class OrderSaga {
-    private final Logger logger = LoggerFactory.getLogger(OrderSaga.class);
     @Autowired
     private transient CommandGateway commandGateway;
+    @Autowired
+    private transient QueryGateway queryGateway;
+
+    private final Logger logger = LoggerFactory.getLogger(OrderSaga.class);
+
 
     @StartSaga
     @SagaEventHandler(associationProperty = "orderId")
@@ -41,5 +51,25 @@ public class OrderSaga {
                 String.format("ProductReservedEvent is handled for the orderId: %s and productId : %s",
                         productReservedEvent.getOrderId(),productReservedEvent.getProductId())
         );
+
+        var userId = productReservedEvent.getUserId();
+        try {
+            FetchUserPaymentDetailsQuery userPaymentDetailsQuery = new FetchUserPaymentDetailsQuery(userId);
+            User user = this.queryGateway.query(userPaymentDetailsQuery, ResponseTypes.instanceOf(User.class)).join();
+
+            if(Objects.isNull(user)) {
+                //start compensating Transaction
+                return;
+            }
+
+            logger.info("Successfully fetch user details for user : " + user);
+            // Send Command
+        } catch (Exception e) {
+            logger.error(" Error when fetching user details for userId :" + userId);
+            logger.error(e.getMessage());
+            // start compensating Transaction
+            return;
+        }
+
     }
 }
