@@ -5,6 +5,7 @@ import com.samic.OrdersService.core.data.OrderEntity;
 import com.samic.OrdersService.core.data.OrderRepository;
 import com.samic.OrdersService.core.events.OrderApprovedEvent;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
+import com.samic.OrdersService.core.events.OrderRejectedEvent;
 import lombok.AllArgsConstructor;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
@@ -38,6 +39,15 @@ public class OrderEventsHandler {
             order.setOrderStatus(orderApprovedEvent.getOrderStatus());
             orderRepository.save(order);
         }
+    }
 
+    @EventHandler
+    public void on(OrderRejectedEvent orderRejectedEvent) {
+        var orderOptional = orderRepository.findById(orderRejectedEvent.getOrderId());
+        if(orderOptional.isPresent()) {
+            var order = orderOptional.get();
+            order.setOrderStatus(orderRejectedEvent.getOrderStatus());
+            orderRepository.save(order);
+        }
     }
 }

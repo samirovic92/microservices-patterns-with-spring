@@ -2,9 +2,12 @@ package com.samic.OrdersService.command;
 
 import com.samic.OrdersService.command.commands.ApproveOrderCommand;
 import com.samic.OrdersService.command.commands.CreateOrderCommand;
+import com.samic.OrdersService.command.commands.RejectOrderCommand;
 import com.samic.OrdersService.core.events.OrderApprovedEvent;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
+import com.samic.OrdersService.core.events.OrderRejectedEvent;
 import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
@@ -37,6 +40,14 @@ public class OrderAggregate {
         AggregateLifecycle.apply(orderCreatedEvent);
     }
 
+    @CommandHandler
+    public void handle(RejectOrderCommand rejectOrderCommand) {
+        OrderRejectedEvent orderRejectedEvent = new OrderRejectedEvent(
+                rejectOrderCommand.getOrderId(), rejectOrderCommand.getReason()
+        );
+        AggregateLifecycle.apply(orderRejectedEvent);
+    }
+
     @EventSourcingHandler
     public void on(OrderCreatedEvent orderCreatedEvent) {
         this.orderId = orderCreatedEvent.orderId;
@@ -50,5 +61,10 @@ public class OrderAggregate {
     @EventSourcingHandler
     public void on(OrderApprovedEvent orderCreatedEvent) {
         this.orderStatus = OrderStatus.APPROVED;
+    }
+
+    @EventHandler
+    public void on(OrderRejectedEvent orderRejectedEvent ) {
+        this.orderStatus = orderRejectedEvent.getOrderStatus();
     }
 }

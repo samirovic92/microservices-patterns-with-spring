@@ -3,6 +3,7 @@ package com.samic.ProductsService.query;
 import com.samic.ProductsService.core.data.ProductEntity;
 import com.samic.ProductsService.core.data.ProductRepository;
 import com.samic.ProductsService.core.events.ProductCreatedEvent;
+import com.samic.commonService.events.ProductReservationCancelledEvent;
 import com.samic.commonService.events.ProductReservedEvent;
 import lombok.AllArgsConstructor;
 import org.axonframework.config.ProcessingGroup;
@@ -34,11 +35,20 @@ public class ProductEventsHandler {
 
     @EventHandler
     public void on(ProductReservedEvent event) {
-        logger.info("ProductReservedEvent is called for productId : " + event.getProductId());
         var productOptional = productRepository.findById(event.getProductId());
         if (productOptional.isPresent()) {
             var product = productOptional.get();
             product.setQuantity(product.getQuantity() - event.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    @EventHandler
+    public void on(ProductReservationCancelledEvent event) {
+        var productOptional = productRepository.findById(event.getProductId());
+        if (productOptional.isPresent()) {
+            var product = productOptional.get();
+            product.setQuantity(product.getQuantity() + event.getQuantity());
             productRepository.save(product);
         }
     }

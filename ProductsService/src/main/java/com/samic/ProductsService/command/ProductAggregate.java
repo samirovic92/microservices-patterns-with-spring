@@ -2,7 +2,9 @@ package com.samic.ProductsService.command;
 
 import com.samic.ProductsService.command.commands.CreateProductCommand;
 import com.samic.ProductsService.core.events.ProductCreatedEvent;
+import com.samic.commonService.command.CancelProductReservationCommand;
 import com.samic.commonService.command.ReserveProductCommand;
+import com.samic.commonService.events.ProductReservationCancelledEvent;
 import com.samic.commonService.events.ProductReservedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -51,6 +53,13 @@ public class ProductAggregate {
         AggregateLifecycle.apply(productReservedEvent);
     }
 
+    @CommandHandler
+    public void handle(CancelProductReservationCommand cancelProductReservationCommand) {
+        ProductReservationCancelledEvent productReservationCancelledEvent = new ProductReservationCancelledEvent();
+        BeanUtils.copyProperties(cancelProductReservationCommand, productReservationCancelledEvent);
+        AggregateLifecycle.apply(productReservationCancelledEvent);
+    }
+
     @EventSourcingHandler
     public void on(ProductCreatedEvent productCreatedEvent) {
         this.productId = productCreatedEvent.getProductId();
@@ -62,5 +71,10 @@ public class ProductAggregate {
     @EventSourcingHandler
     public void on(ProductReservedEvent productReservedEvent) {
         this.quantity -= productReservedEvent.getQuantity();
+    }
+
+    @EventSourcingHandler
+    public void on(ProductReservationCancelledEvent productReservationCancelledEvent) {
+        this.quantity += productReservationCancelledEvent.getQuantity();
     }
 }

@@ -1,11 +1,15 @@
 package com.samic.OrdersService.saga;
 
 import com.samic.OrdersService.command.commands.ApproveOrderCommand;
+import com.samic.OrdersService.command.commands.RejectOrderCommand;
 import com.samic.OrdersService.core.events.OrderApprovedEvent;
 import com.samic.OrdersService.core.events.OrderCreatedEvent;
+import com.samic.OrdersService.core.events.OrderRejectedEvent;
+import com.samic.commonService.command.CancelProductReservationCommand;
 import com.samic.commonService.command.ProcessPaymentCommand;
 import com.samic.commonService.command.ReserveProductCommand;
 import com.samic.commonService.events.PaymentProcessedEvent;
+import com.samic.commonService.events.ProductReservationCancelledEvent;
 import com.samic.commonService.events.ProductReservedEvent;
 import com.samic.commonService.model.User;
 import com.samic.commonService.query.FetchUserPaymentDetailsQuery;
@@ -42,32 +46,32 @@ public class OrderSaga {
         logger.info(String.format("OrderCreatedEvent event is handled for the orderId: %s", orderCreatedEvent.getOrderId()));
         ReserveProductCommand reserveProductCommand = new ReserveProductCommand();
         BeanUtils.copyProperties(orderCreatedEvent, reserveProductCommand);
-        this.commandGateway.send(reserveProductCommand, reserveProductCommandCallback());
+        this.commandGateway.send(reserveProductCommand, reserveProductCommandCallback(orderCreatedEvent.getOrderId()));
     }
 
     @SagaEventHandler(associationProperty = "orderId")
     public void handle(ProductReservedEvent productReservedEvent) {
         logger.info(
                 String.format("ProductReservedEvent is handled for the orderId: %s and productId : %s",
-                        productReservedEvent.getOrderId(),productReservedEvent.getProductId())
+                        productReservedEvent.getOrderId(), productReservedEvent.getProductId())
         );
 
         var userId = productReservedEvent.getUserId();
         try {
-
             FetchUserPaymentDetailsQuery userPaymentDetailsQuery = new FetchUserPaymentDetailsQuery(userId);
             User user = this.queryGateway.query(userPaymentDetailsQuery, ResponseTypes.instanceOf(User.class)).join();
-            if(Objects.isNull(user)) {
-                //start compensating Transaction
+            if (Objects.isNull(user)) {
+                cancelProductReservation(productReservedEvent, "Could not fetch user payment details");
                 return;
             }
+
             logger.info("Successfully fetch user details for user : " + user);
             ProcessPaymentCommand processPaymentCommand = buildProcessPaymentCommand(productReservedEvent, user);
-            commandGateway.send(processPaymentCommand, processPaymentCommandCallback());
+            commandGateway.send(processPaymentCommand, processPaymentCommandCallback(productReservedEvent));
 
         } catch (Exception e) {
-            logger.error(" Error when fetching user details for userId :" + userId, e.getMessage());
-            // start compensating Transaction
+            // compensating Transaction
+            cancelProductReservation(productReservedEvent, e.getMessage());
             return;
         }
     }
@@ -75,7 +79,7 @@ public class OrderSaga {
     @SagaEventHandler(associationProperty = "orderId")
     private void handle(PaymentProcessedEvent paymentProcessedEvent) {
         ApproveOrderCommand approveOrderCommand = new ApproveOrderCommand(paymentProcessedEvent.getOrderId());
-       this.commandGateway.send(approveOrderCommand);
+        this.commandGateway.send(approveOrderCommand);
     }
 
     @EndSaga
@@ -85,18 +89,31 @@ public class OrderSaga {
         // SagaLifecycle.end();
     }
 
-    private CommandCallback<ReserveProductCommand, Object> reserveProductCommandCallback() {
+    @SagaEventHandler(associationProperty = "orderId")
+    private void handle(ProductReservationCancelledEvent productReservationCancelledEvent) {
+        rejectOrder(productReservationCancelledEvent.getOrderId(), productReservationCancelledEvent.getReason());
+    }
+
+    @EndSaga
+    @SagaEventHandler(associationProperty = "orderId")
+    public void handle(OrderRejectedEvent orderRejectedEvent) {
+        logger.info("Successfully rejected order with id " + orderRejectedEvent.getOrderId());
+    }
+
+    private CommandCallback<ReserveProductCommand, Object> reserveProductCommandCallback(String orderId) {
         return (commandMessage, commandResultMessage) -> {
             if (commandResultMessage.isExceptional()) {
-                // start a compensating transaction
+                // compensating transaction
+                rejectOrder(orderId, commandResultMessage.exceptionResult().getMessage());
             }
         };
     }
 
-    private CommandCallback<ProcessPaymentCommand, Object> processPaymentCommandCallback() {
+    private CommandCallback<ProcessPaymentCommand, Object> processPaymentCommandCallback(ProductReservedEvent productReservedEvent) {
         return (commandMessage, commandResultMessage) -> {
             if (commandResultMessage.isExceptional()) {
-                // start a compensating transaction
+                // compensating transaction
+                cancelProductReservation(productReservedEvent, "Could not proccess user payment with provided payment details");
             }
         };
     }
@@ -107,5 +124,21 @@ public class OrderSaga {
                 .orderId(productReservedEvent.getOrderId())
                 .paymentDetails(user.getPaymentDetails())
                 .build();
+    }
+
+    private void cancelProductReservation(ProductReservedEvent productReservedEvent, String reason) {
+        CancelProductReservationCommand cancelProductReservationCommand = CancelProductReservationCommand.builder()
+                .orderId(productReservedEvent.getOrderId())
+                .productId(productReservedEvent.getProductId())
+                .userId(productReservedEvent.getUserId())
+                .quantity(productReservedEvent.getQuantity())
+                .reason(reason)
+                .build();
+        commandGateway.send(cancelProductReservationCommand);
+    }
+
+    private void rejectOrder(String orderId, String reason) {
+        RejectOrderCommand rejectOrderCommand = new RejectOrderCommand(orderId, reason);
+        commandGateway.send(rejectOrderCommand);
     }
 }
