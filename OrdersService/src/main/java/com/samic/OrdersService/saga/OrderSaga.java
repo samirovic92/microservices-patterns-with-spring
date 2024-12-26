@@ -75,7 +75,7 @@ public class OrderSaga {
 
             logger.info("Successfully fetch user details for user : " + user);
 
-            this.scheduleId = deadlineManager.schedule(Duration.ofSeconds(10), PAYMENT_PROCESSING_DEADLINE, productReservedEvent);
+            this.scheduleId = deadlineManager.schedule(Duration.ofSeconds(120), PAYMENT_PROCESSING_DEADLINE, productReservedEvent);
 
             ProcessPaymentCommand processPaymentCommand = buildProcessPaymentCommand(productReservedEvent, user);
             commandGateway.send(processPaymentCommand, processPaymentCommandCallback(productReservedEvent));
