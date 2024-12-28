@@ -1,11 +1,8 @@
 package com.samic.ProductsService.query.rest;
 
-import com.samic.ProductsService.command.rest.CreateProductRequest;
 import com.samic.ProductsService.core.data.ProductEntity;
-import com.samic.ProductsService.query.FindProductsQuery;
+import com.samic.ProductsService.query.queries.FindProductsQuery;
 import lombok.AllArgsConstructor;
-import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.axonframework.messaging.responsetypes.ResponseType;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.web.bind.annotation.*;

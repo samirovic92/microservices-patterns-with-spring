@@ -1,4 +1,4 @@
-package com.samic.ProductsService.query;
+package com.samic.ProductsService.query.queries;
 
 import lombok.Data;
 
