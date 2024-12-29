@@ -8,6 +8,7 @@ import com.samic.commonService.events.ProductReservedEvent;
 import lombok.AllArgsConstructor;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.eventhandling.ResetHandler;
 import org.axonframework.messaging.interceptors.ExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,5 +52,10 @@ public class ProductEventsHandler {
             product.setQuantity(product.getQuantity() + event.getQuantity());
             productRepository.save(product);
         }
+    }
+
+    @ResetHandler
+    public void reset() {
+        this.productRepository.deleteAll();
     }
 }
