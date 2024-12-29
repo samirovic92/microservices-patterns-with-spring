@@ -12,3 +12,12 @@ In this project, I will implement several microservices patterns, including:
 - Eureka server Discovery
 - Axon framework
 - Axon server
+
+# Event Driven
+![CQRS](images/event-driven-microservices.png)
+
+# CQRS
+![CQRS](images/CQRS.png)
+
+# Saga (Orchestration-based)
+![CQRS](images/Orchestration-based-saga.png)
