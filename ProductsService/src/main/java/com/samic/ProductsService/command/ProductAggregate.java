@@ -6,6 +6,8 @@ import com.samic.commonService.command.CancelProductReservationCommand;
 import com.samic.commonService.command.ReserveProductCommand;
 import com.samic.commonService.events.ProductReservationCancelledEvent;
 import com.samic.commonService.events.ProductReservedEvent;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -16,7 +18,9 @@ import org.springframework.beans.BeanUtils;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-@Aggregate
+@Aggregate(snapshotTriggerDefinition = "productSnapshotTriggerDefinition")
+@AllArgsConstructor
+@Data
 public class ProductAggregate {
 
     @AggregateIdentifier

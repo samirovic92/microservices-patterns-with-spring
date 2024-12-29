@@ -37,3 +37,7 @@ eureka:
   instance:
     instance-id: ${spring.application.name}:${instanceId:${random.value}}
 
+logging:
+  level:
+    org.axonframework.axonserver.connector.event.axon.AxonServerEventStore: DEBUG
+
